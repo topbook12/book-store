@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
-import { db, storage } from '../../firebase';
+import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -40,56 +39,72 @@ export default function UploadMaterial() {
     }
 
     setIsLoading(true);
+    setUploadProgress(10);
 
     try {
-      const storageRef = ref(storage, `materials/${Date.now()}_${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(progress);
+      // 1. Get Presigned URL
+      const response = await fetch('/api/upload-url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        (error) => {
-          console.error("Upload error caught:", error);
-          toast.error(error.message, { duration: 10000 });
-          setIsLoading(false);
-          setUploadProgress(0);
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to obtain upload ticket from server.');
+      }
+
+      const { presignedUrl, publicUrl } = await response.json();
+      setUploadProgress(40);
+
+      // 2. Upload directly to Cloudflare R2
+      const uploadResponse = await fetch(presignedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type || 'application/octet-stream',
         },
-        async () => {
-          try {
-            const publicUrl = await getDownloadURL(uploadTask.snapshot.ref);
+      });
 
-            await addDoc(collection(db, 'materials'), {
-              title,
-              description,
-              type,
-              category: category || 'Uncategorized',
-              semester,
-              fileUrl: publicUrl,
-              fileName: file.name,
-              uploaderId: user.uid,
-              uploaderName: user.displayName || user.email,
-              createdAt: Date.now(),
-              downloads: 0,
-              size: file.size, 
-            });
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.error("R2 Upload Failed:", uploadResponse.status, errorText);
+        throw new Error(`Upload Failed (${uploadResponse.status}): Please check if your Cloudflare R2 credentials are correct and have "Object Read & Write" permission.`);
+      }
+      
+      setUploadProgress(80);
 
-            toast.success('Material uploaded successfully!');
-            setTimeout(() => navigate('/dashboard/materials'), 500);
-          } catch (dbError: any) {
-            console.error("Database error:", dbError);
-            toast.error(dbError.message || 'Failed to save material details');
-          } finally {
-            setIsLoading(false);
-            setUploadProgress(0);
-          }
-        }
-      );
+      // 3. Create the record in Firestore using the publicUrl
+      await addDoc(collection(db, 'materials'), {
+        title,
+        description,
+        type,
+        category: category || 'Uncategorized',
+        semester,
+        fileUrl: publicUrl,
+        fileName: file.name,
+        uploaderId: user.uid,
+        uploaderName: user.displayName || user.email,
+        createdAt: Date.now(),
+        downloads: 0,
+        size: file.size, 
+      });
+
+      setUploadProgress(100);
+      toast.success('Material uploaded successfully!');
+      setTimeout(() => navigate('/dashboard/materials'), 500);
     } catch (error: any) {
-      console.error("Initialization error caught:", error);
-      toast.error(error.message, { duration: 10000 });
+      console.error("Upload error caught:", error);
+      let errorMsg = error.message;
+      if (errorMsg === 'Failed to fetch' || errorMsg.includes('NetworkError')) {
+        errorMsg = 'Network Error: Upload blocked by CORS or Invalid R2 Credentials. Please ensure your R2 API keys and CORS policy are correctly configured.';
+      }
+      toast.error(errorMsg, { duration: 10000 });
+    } finally {
       setIsLoading(false);
       setUploadProgress(0);
     }

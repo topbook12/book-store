@@ -1,8 +1,7 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { AwsClient } from "aws4fetch";
 
 // Fallbacks for local / AI Studio preview (Never push actual secret keys to GitHub)
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID || "bae529746fcd29c8e7251c3cda62dc67";
@@ -12,14 +11,9 @@ const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY || "fed12428ff53de
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || "ice-dept-documents";
 const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || "https://pub-16c77c3aa29c4145b29453efaaf65851.r2.dev";
 
-const s3Client = new S3Client({
-  region: "auto",
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID,
-    secretAccessKey: R2_SECRET_ACCESS_KEY,
-  },
-  forcePathStyle: true,
+const aws = new AwsClient({
+  accessKeyId: R2_ACCESS_KEY_ID,
+  secretAccessKey: R2_SECRET_ACCESS_KEY,
 });
 
 async function startServer() {
@@ -39,16 +33,18 @@ async function startServer() {
 
       // Generate a unique object key
       const key = `${Date.now()}-${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const url = new URL(`https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${key}`);
+      url.searchParams.set('X-Amz-Expires', '3600');
 
-      const command = new PutObjectCommand({
-        Bucket: R2_BUCKET_NAME,
-        Key: key,
-        ContentType: contentType || "application/octet-stream",
+      const signedRequest = await aws.sign(url, {
+        method: "PUT",
+        aws: { signQuery: true },
+        headers: {
+          "Content-Type": contentType || "application/octet-stream",
+        }
       });
 
-      const presignedUrl = await getSignedUrl(s3Client, command, { 
-        expiresIn: 3600
-      });
+      const presignedUrl = signedRequest.url;
       const publicUrl = `${R2_PUBLIC_URL}/${key}`;
 
       res.json({ presignedUrl, publicUrl, key });

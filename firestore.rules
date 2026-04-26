@@ -1,0 +1,98 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserRole() {
+      let isExistingUser = exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      return isExistingUser ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : 'STUDENT';
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (getUserRole() == 'ADMIN' || 
+          (request.auth.token.email == "topubiswas.math@gmail.com"));
+    }
+
+    function isTeacher() {
+      return isAuthenticated() && (getUserRole() == 'TEACHER' || isAdmin());
+    }
+
+    function hasOnlyAllowedFields(allowedFields) {
+      return request.resource.data.keys().hasOnly(allowedFields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser() {
+      let data = request.resource.data;
+      return hasOnlyAllowedFields(['uid', 'email', 'displayName', 'photoURL', 'role', 'createdAt']) &&
+        data.uid is string &&
+        data.email is string &&
+        data.role in ['ADMIN', 'TEACHER', 'STUDENT'];
+    }
+
+    function isValidMaterial() {
+      let data = request.resource.data;
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+        data.type in ['Book', 'Note', 'Lab Manual', 'Slide', 'Paper', 'Thesis', 'Question', 'Syllabus', 'Other'] &&
+        data.category is string &&
+        data.fileUrl is string && data.fileUrl.matches("^https?://.*") &&
+        data.uploaderId == request.auth.uid &&
+        data.createdAt is number;
+    }
+
+    function isValidNotice() {
+      let data = request.resource.data;
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+        data.content is string && data.content.size() > 0 && data.content.size() <= 5000 &&
+        data.priority in ['High', 'Normal', 'Urgent'] &&
+        data.authorId == request.auth.uid &&
+        data.createdAt is number;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      // Users can read any user profile (to see teacher names, uploader names, etc)
+      allow read: if isAuthenticated();
+      // Only an Admin can create a user with a non-STUDENT role, or the user can create themselves as STUDENT
+      allow create: if isAuthenticated() && isValidUser() && 
+        ((isOwner(userId) && request.resource.data.role == 'STUDENT') || isAdmin() || (isOwner(userId) && request.auth.token.email == "topubiswas.math@gmail.com"));
+      allow update: if isAuthenticated() && isValidUser() && 
+        ((isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin() || (isOwner(userId) && request.auth.token.email == "topubiswas.math@gmail.com"));
+      allow delete: if isAdmin();
+    }
+
+    match /materials/{materialId} {
+      // Anyone can read materials
+      allow read: if true;
+      allow create: if isTeacher() && isValidMaterial();
+      allow update: if isTeacher() && isValidMaterial() && (request.auth.uid == resource.data.uploaderId || isAdmin());
+      // Teacher can delete their own, Admin can delete any
+      allow delete: if isTeacher() && (request.auth.uid == resource.data.uploaderId || isAdmin());
+    }
+
+    match /notices/{noticeId} {
+      // Anyone can read notices
+      allow read: if true;
+      allow create: if isTeacher() && isValidNotice();
+      allow update: if isTeacher() && isValidNotice() && (request.auth.uid == resource.data.authorId || isAdmin());
+      allow delete: if isTeacher() && (request.auth.uid == resource.data.authorId || isAdmin());
+    }
+  }
+}

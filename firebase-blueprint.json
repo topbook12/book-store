@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Represents a user in the system.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "TEACHER", "STUDENT"] },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Material": {
+      "title": "Material",
+      "description": "An academic resource.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["Book", "Note", "Lab Manual", "Slide", "Paper", "Thesis", "Question", "Syllabus", "Other"] },
+        "category": { "type": "string" },
+        "semester": { "type": "string" },
+        "session": { "type": "string" },
+        "courseCode": { "type": "string" },
+        "fileUrl": { "type": "string" },
+        "fileName": { "type": "string" },
+        "uploaderId": { "type": "string" },
+        "uploaderName": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "downloads": { "type": "number" },
+        "size": { "type": "number" }
+      },
+      "required": ["title", "type", "category", "fileUrl", "uploaderId", "createdAt"]
+    },
+    "Notice": {
+      "title": "Notice",
+      "description": "A notice board entry.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "priority": { "type": "string", "enum": ["High", "Normal", "Urgent"] },
+        "createdAt": { "type": "number" },
+        "authorId": { "type": "string" }
+      },
+      "required": ["title", "content", "priority", "createdAt", "authorId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores user profiles including their roles."
+    },
+    "/materials/{materialId}": {
+      "schema": { "$ref": "#/entities/Material" },
+      "description": "Stores academic materials."
+    },
+    "/notices/{noticeId}": {
+      "schema": { "$ref": "#/entities/Notice" },
+      "description": "Stores current system notices."
+    }
+  }
+}

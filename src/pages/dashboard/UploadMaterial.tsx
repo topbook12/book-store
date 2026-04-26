@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { MaterialType } from '../../types';
 import { Upload } from 'lucide-react';
 import { AwsClient } from 'aws4fetch';
+import { cn } from '../../lib/utils';
 
 // Direct R2 upload for static deployments
 const R2_ACCOUNT_ID = "bae529746fcd29c8e7251c3cda62dc67";
@@ -52,7 +53,7 @@ export default function UploadMaterial() {
     }
 
     setIsLoading(true);
-    setUploadProgress(10);
+    setUploadProgress(0);
 
     try {
       // 1. Generate Presigned URL natively using aws4fetch
@@ -71,26 +72,42 @@ export default function UploadMaterial() {
       const presignedUrl = signedRequest.url;
       const publicUrl = `${R2_PUBLIC_URL}/${key}`;
 
-      setUploadProgress(40);
+      // 2. Upload directly to Cloudflare R2 using XMLHttpRequest for progress
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', presignedUrl, true);
+        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
 
-      // 2. Upload directly to Cloudflare R2
-      const uploadResponse = await fetch(presignedUrl, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type || 'application/octet-stream',
-        },
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = Math.round((event.loaded / event.total) * 100);
+            // Cap at 95% until firesore finishes
+            setUploadProgress(percentComplete > 95 ? 95 : percentComplete);
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            console.error("XHR failed", xhr.status, xhr.responseText);
+            if (xhr.status === 403 || xhr.status === 0) {
+              reject(new Error(`CORS or Permission Error: Ensure Cloudflare R2 bucket "${R2_BUCKET_NAME}" has CORS configured correctly for PUT requests.`));
+            } else {
+              reject(new Error(`Upload Failed (${xhr.status}): ${xhr.responseText}`));
+            }
+          }
+        };
+
+        xhr.onerror = () => {
+          reject(new Error('Network Error: Upload blocked by CORS. Please go to Cloudflare R2 -> Settings -> CORS and allow PUT requests from all origins.'));
+        };
+
+        xhr.send(file);
       });
 
-      if (!uploadResponse.ok) {
-        const errorText = await uploadResponse.text();
-        console.error("R2 Upload Failed:", uploadResponse.status, errorText);
-        throw new Error(`Upload Failed (${uploadResponse.status}): Please check if your Cloudflare R2 CORS policy is correctly configured.`);
-      }
-      
-      setUploadProgress(80);
-
       // 3. Create the record in Firestore using the publicUrl
+      setUploadProgress(98);
       await addDoc(collection(db, 'materials'), {
         title,
         description,
@@ -111,36 +128,33 @@ export default function UploadMaterial() {
       setTimeout(() => navigate('/dashboard/materials'), 500);
     } catch (error: any) {
       console.error("Upload error caught:", error);
-      let errorMsg = error.message;
-      if (errorMsg === 'Failed to fetch' || errorMsg.includes('NetworkError')) {
-        errorMsg = 'Network Error: Upload blocked by CORS or Invalid R2 Credentials. Please ensure your R2 API keys and CORS policy are correctly configured.';
-      }
-      toast.error(errorMsg, { duration: 10000 });
+      toast.error(error.message, { duration: 15000 });
     } finally {
       setIsLoading(false);
-      setUploadProgress(0);
+      // Don't reset to 0 immediately so user can see it finished
+      setTimeout(() => setUploadProgress(0), 1000);
     }
   };
 
   const types: MaterialType[] = ['Book', 'Note', 'Lab Manual', 'Slide', 'Paper', 'Thesis', 'Question', 'Syllabus', 'Other'];
 
   return (
-    <Card className="max-w-2xl mx-auto border bg-card">
-      <CardHeader>
-        <CardTitle>Upload New Material</CardTitle>
-        <CardDescription>Add new academic resources to the digital library</CardDescription>
+    <Card className="max-w-2xl mx-auto border bg-card/80 backdrop-blur-xl shadow-xl rounded-3xl overflow-hidden">
+      <CardHeader className="bg-primary/5 border-b border-primary/10 pb-6">
+        <CardTitle className="text-2xl font-bold">Upload Material</CardTitle>
+        <CardDescription className="text-base text-muted-foreground">Share academic resources securely</CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleUpload} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <CardContent className="p-6 md:p-8">
+        <form onSubmit={handleUpload} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Title *</label>
-              <Input required value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Physics Note CH-1" className="bg-background" />
+              <label className="text-sm font-semibold tracking-tight">Title *</label>
+              <Input required value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Physics Note CH-1" className="h-12 bg-background/50 rounded-xl" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Type *</label>
+              <label className="text-sm font-semibold tracking-tight">Type *</label>
               <select 
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="flex h-12 w-full rounded-xl border border-input bg-background/50 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm transition-colors hover:border-primary/50"
                 value={type} 
                 onChange={(e) => setType(e.target.value as MaterialType)}
               >
@@ -150,49 +164,54 @@ export default function UploadMaterial() {
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium">Description</label>
+            <label className="text-sm font-semibold tracking-tight">Description</label>
             <textarea 
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[100px] focus:outline-none focus:ring-2 focus:ring-primary"
+              className="flex w-full rounded-xl border border-input bg-background/50 px-4 py-3 text-sm min-h-[120px] focus:outline-none focus:ring-2 focus:ring-primary shadow-sm transition-colors hover:border-primary/50 resize-y"
               value={description} onChange={e => setDescription(e.target.value)} placeholder="Provide details about the material..." />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Subject Category *</label>
-              <Input required value={category} onChange={e => setCategory(e.target.value)} placeholder="e.g. ICE202, VLSI" className="bg-background" />
+              <label className="text-sm font-semibold tracking-tight">Subject Category *</label>
+              <Input required value={category} onChange={e => setCategory(e.target.value)} placeholder="e.g. ICE202, VLSI" className="h-12 bg-background/50 rounded-xl" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Semester (Optional)</label>
-              <Input value={semester} onChange={e => setSemester(e.target.value)} placeholder="e.g. 3, 5" className="bg-background" />
+              <label className="text-sm font-semibold tracking-tight">Semester (Optional)</label>
+              <Input value={semester} onChange={e => setSemester(e.target.value)} placeholder="e.g. 3, 5" className="h-12 bg-background/50 rounded-xl" />
             </div>
           </div>
 
           <div className="space-y-2 pt-2">
-            <label className="text-sm font-medium">Upload File *</label>
-            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-border rounded-lg bg-background/50 relative hover:bg-accent/5 transition-colors">
-              <div className="space-y-1 justify-center flex flex-col items-center">
-                <Upload className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
-                <div className="flex text-sm text-muted-foreground">
-                  <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-medium text-primary hover:underline focus-within:outline-none">
-                    <span>{file ? file.name : "Select a document to upload"}</span>
+            <label className="text-sm font-semibold tracking-tight">Upload File *</label>
+            <div className={cn("mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-2xl relative transition-all duration-300", file ? "border-primary bg-primary/5 shadow-inner" : "border-border bg-background/50 hover:bg-accent/5 hover:border-primary/50")}>
+              <div className="space-y-2 flex flex-col items-center text-center">
+                <div className={cn("p-4 rounded-full mb-2 transition-colors", file ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground")}>
+                  <Upload className="mx-auto h-8 w-8" />
+                </div>
+                <div className="flex text-sm text-foreground font-medium">
+                  <label htmlFor="file-upload" className="relative cursor-pointer rounded-md text-primary hover:underline focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 px-2">
+                    <span>{file ? file.name : "Tap to select a document"}</span>
                     <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={e => setFile(e.target.files?.[0] || null)} />
                   </label>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  PDF, DOCX, ZIP, PPTX up to 50MB
+                <p className="text-xs text-muted-foreground mt-2 font-medium">
+                  {file ? `Size: ${(file.size / 1024 / 1024).toFixed(2)} MB` : 'PDF, DOCX, ZIP, PPTX up to 50MB'}
                 </p>
               </div>
             </div>
           </div>
 
-          {isLoading && uploadProgress > 0 && (
-             <div className="w-full bg-muted rounded-full h-2 mt-4 overflow-hidden">
-               <div className="bg-primary h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+          {isLoading && (
+             <div className="w-full bg-muted/50 rounded-full h-3 mt-4 overflow-hidden border shadow-inner relative">
+               <div className="absolute inset-0 bg-primary/20 animate-pulse"></div>
+               <div className="bg-gradient-to-r from-primary to-purple-600 h-full rounded-full transition-all duration-300 ease-out flex items-center justify-end px-2" style={{ width: `${Math.max(5, uploadProgress)}%` }}>
+                  <span className="text-[8px] font-bold text-white shadow-sm drop-shadow-md">{uploadProgress}%</span>
+               </div>
              </div>
           )}
 
-          <Button type="submit" disabled={isLoading} className="w-full mt-6">
-            {isLoading ? `Uploading... ${uploadProgress}%` : 'Publish Material'}
+          <Button type="submit" disabled={isLoading} className="w-full h-14 rounded-xl text-lg font-bold shadow-xl shadow-primary/20 transition-transform active:scale-95">
+            {isLoading ? 'Uploading...' : 'Publish Material'}
           </Button>
         </form>
       </CardContent>

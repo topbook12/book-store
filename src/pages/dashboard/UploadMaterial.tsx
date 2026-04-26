@@ -9,6 +9,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { toast } from 'sonner';
 import { MaterialType } from '../../types';
 import { Upload } from 'lucide-react';
+import { AwsClient } from 'aws4fetch';
+
+// Direct R2 upload for static deployments
+const R2_ACCOUNT_ID = "bae529746fcd29c8e7251c3cda62dc67";
+const R2_ACCESS_KEY_ID = "eb42d02da85821fa3668f3ac725c8cee";
+const R2_SECRET_ACCESS_KEY = "fed12428ff53de19ab08675b5c102f1be863964e04669fbafecdf0222b59b1e6";
+const R2_BUCKET_NAME = "ice-dept-documents";
+const R2_PUBLIC_URL = "https://pub-16c77c3aa29c4145b29453efaaf65851.r2.dev";
+
+const aws = new AwsClient({
+  accessKeyId: R2_ACCESS_KEY_ID,
+  secretAccessKey: R2_SECRET_ACCESS_KEY,
+});
 
 export default function UploadMaterial() {
   const { user } = useAuthStore();
@@ -42,23 +55,22 @@ export default function UploadMaterial() {
     setUploadProgress(10);
 
     try {
-      // 1. Get Presigned URL
-      const response = await fetch('/api/upload-url', {
-        method: 'POST',
+      // 1. Generate Presigned URL natively using aws4fetch
+      const key = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const url = new URL(`https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${key}`);
+      url.searchParams.set('X-Amz-Expires', '3600');
+
+      const signedRequest = await aws.sign(url, {
+        method: "PUT",
+        aws: { signQuery: true },
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-        }),
+          "Content-Type": file.type || "application/octet-stream",
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to obtain upload ticket from server.');
-      }
+      const presignedUrl = signedRequest.url;
+      const publicUrl = `${R2_PUBLIC_URL}/${key}`;
 
-      const { presignedUrl, publicUrl } = await response.json();
       setUploadProgress(40);
 
       // 2. Upload directly to Cloudflare R2
@@ -73,7 +85,7 @@ export default function UploadMaterial() {
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
         console.error("R2 Upload Failed:", uploadResponse.status, errorText);
-        throw new Error(`Upload Failed (${uploadResponse.status}): Please check if your Cloudflare R2 credentials are correct and have "Object Read & Write" permission.`);
+        throw new Error(`Upload Failed (${uploadResponse.status}): Please check if your Cloudflare R2 CORS policy is correctly configured.`);
       }
       
       setUploadProgress(80);

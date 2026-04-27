@@ -204,7 +204,7 @@ export default function UploadMaterial() {
           {isLoading && (
              <div className="w-full bg-muted/50 rounded-full h-3 mt-4 overflow-hidden border shadow-inner relative">
                <div className="absolute inset-0 bg-primary/20 animate-pulse"></div>
-               <div className="bg-gradient-to-r from-primary to-purple-600 h-full rounded-full transition-all duration-300 ease-out flex items-center justify-end px-2" style={{ width: `${Math.max(5, uploadProgress)}%` }}>
+               <div className="bg-gradient-to-r from-primary to-emerald-600 h-full rounded-full transition-all duration-300 ease-out flex items-center justify-end px-2" style={{ width: `${Math.max(5, uploadProgress)}%` }}>
                   <span className="text-[8px] font-bold text-white shadow-sm drop-shadow-md">{uploadProgress}%</span>
                </div>
              </div>

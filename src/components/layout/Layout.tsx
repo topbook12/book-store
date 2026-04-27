@@ -54,9 +54,16 @@ export default function Layout() {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans pb-16 md:pb-0 overflow-x-hidden">
+    <div className="min-h-screen bg-transparent text-foreground flex flex-col font-sans pb-16 md:pb-0 overflow-x-hidden relative">
+      {/* Global Colorful Animated Background */}
+      <div className="fixed inset-0 z-[-1] overflow-hidden bg-background">
+        <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] min-w-[300px] max-w-[600px] bg-blue-500/20 dark:bg-blue-600/30 rounded-full blur-[100px] mix-blend-multiply dark:mix-blend-screen animate-move-blob" />
+        <div className="absolute top-[20%] right-[-10%] w-[35vw] h-[35vw] min-w-[300px] max-w-[500px] bg-emerald-400/20 dark:bg-emerald-600/30 rounded-full blur-[100px] mix-blend-multiply dark:mix-blend-screen animate-move-blob animation-delay-2000" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[45vw] h-[45vw] min-w-[300px] max-w-[700px] bg-pink-500/20 dark:bg-pink-600/30 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-screen animate-move-blob animation-delay-4000" />
+      </div>
+
       {/* Top Header */}
-      <header className="sticky top-0 z-40 w-full border-b bg-card/80 backdrop-blur-xl border-border/40 shadow-sm">
+      <header className="sticky top-0 z-40 w-full border-b bg-card/60 backdrop-blur-2xl border-border/40 shadow-sm">
         <div className="container mx-auto px-4 h-[60px] md:h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link to="/" className="flex items-center space-x-3 active:scale-95 transition-transform">

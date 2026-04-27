@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
@@ -24,7 +24,7 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
   --radius-sm: var(--radius);
@@ -35,48 +35,48 @@
 
 @layer base {
   :root {
-    --background: #f8fafc;
-    --foreground: #0f172a;
+    --background: #ffffff;
+    --foreground: #09090b;
     --card: #ffffff;
-    --card-foreground: #0f172a;
+    --card-foreground: #09090b;
     --popover: #ffffff;
-    --popover-foreground: #0f172a;
-    --primary: #0284c7;
-    --primary-foreground: #ffffff;
-    --secondary: #e2e8f0;
-    --secondary-foreground: #0f172a;
-    --muted: #f1f5f9;
-    --muted-foreground: #64748b;
-    --accent: #e0f2fe;
-    --accent-foreground: #0284c7;
+    --popover-foreground: #09090b;
+    --primary: #1ed760; /* Vibrant Spotify Green */
+    --primary-foreground: #000000;
+    --secondary: #f4f4f5;
+    --secondary-foreground: #09090b;
+    --muted: #f4f4f5;
+    --muted-foreground: #71717a;
+    --accent: #dcfce7;
+    --accent-foreground: #15803d;
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
-    --border: #e2e8f0;
-    --input: #e2e8f0;
-    --ring: #38bdf8;
-    --radius: 8px;
+    --border: #e4e4e7;
+    --input: #e4e4e7;
+    --ring: rgba(30, 215, 96, 0.4);
+    --radius: 12px;
   }
 
   .dark {
-    --background: #050608;
-    --foreground: #e0e6ed;
-    --card: #0a0b0e;
-    --card-foreground: #e0e6ed;
-    --popover: #0a0b0e;
-    --popover-foreground: #e0e6ed;
-    --primary: #00f2ff;
-    --primary-foreground: #050608;
-    --secondary: #16181d;
-    --secondary-foreground: #e0e6ed;
-    --muted: #101216;
+    --background: #030712;
+    --foreground: #f8fafc;
+    --card: #0f172a;
+    --card-foreground: #f8fafc;
+    --popover: #0f172a;
+    --popover-foreground: #f8fafc;
+    --primary: #1ed760;
+    --primary-foreground: #000000;
+    --secondary: #1e293b;
+    --secondary-foreground: #f8fafc;
+    --muted: #0f172a;
     --muted-foreground: #94a3b8;
-    --accent: rgba(0, 242, 255, 0.1);
-    --accent-foreground: #00f2ff;
-    --destructive: #ff4444;
+    --accent: rgba(30, 215, 96, 0.15);
+    --accent-foreground: #1ed760;
+    --destructive: #ef4444;
     --destructive-foreground: #ffffff;
-    --border: #1a1c23;
-    --input: #1a1c23;
-    --ring: rgba(0, 242, 255, 0.3);
+    --border: #1e293b;
+    --input: #1e293b;
+    --ring: rgba(30, 215, 96, 0.3);
   }
 
   * {
@@ -108,19 +108,35 @@
 
 @layer utilities {
   .logo-gradient {
-    background: linear-gradient(135deg, var(--primary), #7000ff);
+    background: linear-gradient(135deg, var(--primary), #059669);
   }
   .text-gradient {
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-image: linear-gradient(135deg, var(--primary), #7000ff);
+    background-image: linear-gradient(135deg, var(--primary), #059669);
   }
   .glass-panel {
     @apply bg-card/80 backdrop-blur-xl border border-white/10 shadow-xl;
   }
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+
+  @keyframes move-blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+  .animate-move-blob {
+    animation: move-blob 15s infinite alternate ease-in-out;
+  }
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+  .animation-delay-4000 {
+    animation-delay: 4s;
   }
 }
 

@@ -97,7 +97,7 @@ export default function Materials() {
   };
 
   return (
-    <div className="flex flex-col flex-1 bg-background relative">
+    <div className="flex flex-col flex-1 bg-transparent relative">
       {/* Top Hero Section */}
       <div className="border-b bg-card/60 backdrop-blur-xl relative overflow-hidden transition-all duration-500">
         <div className="absolute inset-0 bg-grid-slate-200/20 [mask-image:linear-gradient(0deg,background,transparent)] dark:bg-grid-slate-800/20" />

@@ -41,9 +41,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-[calc(100vh-60px)] md:min-h-[calc(100vh-64px)] bg-background pb-16 md:pb-0">
+    <div className="flex flex-col md:flex-row min-h-[calc(100vh-60px)] md:min-h-[calc(100vh-64px)] bg-transparent pb-16 md:pb-0">
       {/* Mobile Top Scrollable Nav */}
-      <div className="md:hidden sticky top-[60px] z-40 bg-background border-b border-border/50 py-3 px-4 overflow-x-auto no-scrollbar shadow-sm">
+      <div className="md:hidden sticky top-[60px] z-40 bg-card/80 backdrop-blur-md border-b border-border/50 py-3 px-4 overflow-x-auto no-scrollbar shadow-sm">
         <div className="flex gap-2">
           <NavItem to="/dashboard" icon={LayoutDashboard}>Overview</NavItem>
           <div className="w-px h-6 bg-border mx-1 self-center shrink-0" />
@@ -86,7 +86,7 @@ export default function Dashboard() {
 
         <div className="mt-auto pt-5 border-t border-border/50">
           <Link to="/dashboard/profile" className="flex items-center gap-3 bg-background border border-border/50 rounded-2xl p-3 hover:border-primary/50 transition-colors shadow-sm group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 text-white flex flex-col items-center justify-center text-xs font-bold shadow-inner">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-black flex flex-col items-center justify-center text-xs font-bold shadow-inner">
               {getInitials(user.displayName || user.email)}
             </div>
             <div className="flex flex-col overflow-hidden max-w-[120px]">
@@ -202,7 +202,7 @@ export default function Dashboard() {
                          <span className="text-[10px] font-bold text-green-500 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Operational</span>
                        </div>
                        <div className="h-1.5 bg-muted/50 rounded-full overflow-hidden mt-1">
-                         <div className="h-full bg-gradient-to-r from-primary to-purple-500 w-[42%] rounded-full"></div>
+                         <div className="h-full bg-gradient-to-r from-primary to-emerald-500 w-[42%] rounded-full"></div>
                        </div>
                        <p className="text-[10px] text-muted-foreground font-mono mt-1 font-medium">Storage: 42% used</p>
                     </div>

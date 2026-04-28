@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 import { cn } from '../../lib/utils';
 import { toast } from 'sonner';
+import InstallPWA from '../InstallPWA';
 
 export default function Layout() {
   const { user } = useAuthStore();
@@ -101,6 +102,7 @@ export default function Layout() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
+            <InstallPWA />
             <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground rounded-full hover:bg-accent/50 hover:text-primary active:scale-90 transition-all">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div

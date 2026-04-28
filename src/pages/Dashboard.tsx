@@ -4,7 +4,7 @@ import UploadMaterial from './dashboard/UploadMaterial';
 import UserManagement from './dashboard/UserManagement';
 import ManageMaterials from './dashboard/ManageMaterials';
 import { cn } from '../lib/utils';
-import { LayoutDashboard, Library, Users, Settings, Bell, Upload, ChevronRight, Lock, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Library, Users, Settings, Bell, Upload, ChevronRight, Lock, ShieldCheck, Globe } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function Dashboard() {
@@ -22,8 +22,26 @@ export default function Dashboard() {
     return name.slice(0, 2).toUpperCase();
   };
 
-  const NavItem = ({ to, icon: Icon, children }: any) => {
-    const isActive = location.pathname === to || (to === '/dashboard' && location.pathname === '/dashboard/');
+  const NavItem = ({ to, icon: Icon, children, isExternal }: any) => {
+    const isActive = !isExternal && (location.pathname === to || (to === '/dashboard' && location.pathname === '/dashboard/'));
+    
+    if (isExternal) {
+      return (
+        <a 
+          href={to}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            "flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all active:scale-[0.98] whitespace-nowrap",
+            "text-muted-foreground hover:bg-accent hover:text-foreground"
+          )}
+        >
+          <Icon className="w-4 h-4" />
+          {children}
+        </a>
+      );
+    }
+    
     return (
       <Link 
         to={to} 
@@ -71,7 +89,7 @@ export default function Dashboard() {
               <div className="mt-4 mb-2 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Management</div>
               <NavItem to="/dashboard/upload" icon={Upload}>Upload Material</NavItem>
               <NavItem to="/dashboard/materials" icon={Library}>Manage Materials</NavItem>
-              <NavItem to="/dashboard/notices" icon={Bell}>Priority Notices</NavItem>
+              <NavItem to="https://smart-routine-hub-puce.vercel.app" icon={Globe} isExternal={true}>SRH (Department Site)</NavItem>
             </>
           )}
 

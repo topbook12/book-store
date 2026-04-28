@@ -3,7 +3,7 @@ import { useAuthStore } from '../../store/authStore';
 import { auth } from '../../firebase';
 import { signOut } from 'firebase/auth';
 import { Button } from '../ui/button';
-import { LogOut, Library, Bell, ShoppingCart, LayoutDashboard, Moon, Sun, Home, User, Menu, X, Download, Trash2 } from 'lucide-react';
+import { LogOut, Library, Bell, ShoppingCart, LayoutDashboard, Moon, Sun, Home, User, Menu, X, Download, Trash2, Globe } from 'lucide-react';
 import { useCartStore } from '../../store/cartStore';
 import { useTheme } from '../ThemeProvider';
 import { motion, AnimatePresence } from 'motion/react';
@@ -49,7 +49,7 @@ export default function Layout() {
   const navItems = [
     { name: 'Home', path: '/', icon: Home },
     { name: 'Library', path: '/materials', icon: Library },
-    { name: 'Notices', path: '/notices', icon: Bell },
+    { name: 'SRH', path: 'https://smart-routine-hub-puce.vercel.app', icon: Globe, isExternal: true },
     ...(user ? [{ name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard }] : [])
   ];
 
@@ -74,7 +74,17 @@ export default function Layout() {
             {/* Desktop Navigation */}
             <nav className="hidden md:flex gap-1 ml-4">
                {navItems.map((item) => {
-                 const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+                 const isActive = !item.isExternal && (location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path)));
+                 if (item.isExternal) {
+                   return (
+                     <a key={item.name} href={item.path} target="_blank" rel="noopener noreferrer">
+                       <Button variant="ghost" className="gap-2 rounded-full px-4 font-semibold hover:text-primary hover:bg-primary/10 transition-colors">
+                         <item.icon className="w-4 h-4" />
+                         {item.name}
+                       </Button>
+                     </a>
+                   );
+                 }
                  return (
                   <Link key={item.path} to={item.path}>
                     <Button 
@@ -235,11 +245,29 @@ export default function Layout() {
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/90 backdrop-blur-xl border-t border-border/40 pb-safe">
         <div className="flex items-center justify-around h-16 px-2">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+            const isActive = !item.isExternal && (location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path)));
+            if (item.isExternal) {
+              return (
+                <a 
+                  key={item.name} 
+                  href={item.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex flex-col items-center justify-center h-full space-y-1 active:scale-95 transition-transform relative text-muted-foreground hover:text-primary"
+                >
+                  <div className="p-1.5 rounded-2xl transition-all duration-300">
+                    <item.icon className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-bold transition-all opacity-70">
+                    {item.name}
+                  </span>
+                </a>
+              );
+            }
             return (
               <Link 
                 key={item.path} 
-                to={item.path}
+                to={item.path as string}
                 className="flex-1 flex flex-col items-center justify-center h-full space-y-1 active:scale-95 transition-transform relative"
               >
                 <div className={cn("p-1.5 rounded-2xl transition-all duration-300", isActive ? 'bg-primary shadow-sm text-primary-foreground' : 'text-muted-foreground')}>

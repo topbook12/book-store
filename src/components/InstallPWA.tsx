@@ -36,7 +36,7 @@ export default function InstallPWA() {
       className="gap-2 font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-md rounded-full px-4"
     >
       <Download className="w-4 h-4" />
-      <span className="hidden sm:inline">Install App</span>
+      <span>Install App</span>
     </Button>
   );
 }

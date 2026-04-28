@@ -13,8 +13,6 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: "autoUpdate",
         includeAssets: [
-          "pwa-192x192.svg",
-          "pwa-512x512.svg",
           "pwa-192x192.png",
           "pwa-512x512.png",
         ],
@@ -29,20 +27,22 @@ export default defineConfig(({ mode }) => {
           start_url: "/",
           icons: [
             {
-              src: "pwa-192x192.png",
+              src: "/pwa-192x192.png",
               sizes: "192x192",
               type: "image/png",
+              purpose: "any",
             },
             {
-              src: "pwa-512x512.png",
+              src: "/pwa-512x512.png",
               sizes: "512x512",
               type: "image/png",
+              purpose: "any",
             },
             {
-              src: "pwa-512x512.png",
+              src: "/pwa-512x512.png",
               sizes: "512x512",
               type: "image/png",
-              purpose: "any maskable",
+              purpose: "maskable",
             },
           ],
         },

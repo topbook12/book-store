@@ -18,7 +18,10 @@ async function run () {
           {
             AllowedHeaders: ['*'],
             AllowedMethods: ['GET', 'PUT', 'POST', 'DELETE', 'HEAD'],
-            AllowedOrigins: ['*'],
+            AllowedOrigins: [
+              '*',
+              'https://book-store.bookpreview12.workers.dev'
+            ],
             ExposeHeaders: ['ETag'],
             MaxAgeSeconds: 3600
           }

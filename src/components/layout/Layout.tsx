@@ -30,7 +30,10 @@ export default function Layout() {
 
   const downloadAllAttachments = async () => {
     if (items.length === 0) return;
-    toast.success('Starting batch download...');
+    toast.success('Welcome to Batch Download!', {
+      description: `Preparing your file collection... ICE Portal hopes you find this useful! 🚀`,
+      duration: 3000,
+    });
     for (const item of items) {
       try {
         const response = await fetch(item.fileUrl);

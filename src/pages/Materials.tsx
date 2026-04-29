@@ -5,10 +5,11 @@ import { Material, MaterialType } from '../types';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Search, Download, PlusCircle, Check, Filter, FileText, X, ChevronDown } from 'lucide-react';
+import { Search, Download, PlusCircle, Check, Filter, FileText, X, ChevronDown, Eye } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
+import { toast } from 'sonner';
 
 export default function Materials() {
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -340,12 +341,26 @@ export default function Materials() {
                                <span className="opacity-70">{material.downloads || 0} DLs</span>
                              </div>
                            </div>
-                          <div className="flex items-center gap-3 w-full border-t border-border/30 pt-4">
+                          <div className="flex items-center gap-2 w-full border-t border-border/30 pt-4">
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              className="w-full h-11 rounded-xl gap-2 font-bold hover:bg-primary hover:text-white transition-colors hover:border-primary active:scale-95" 
+                              className="flex-1 h-11 rounded-xl font-bold hover:bg-primary hover:text-white transition-colors hover:border-primary active:scale-95 px-0" 
+                              asChild
+                            >
+                              <a href={material.fileUrl} target="_blank" rel="noopener noreferrer">
+                                <Eye className="w-4 h-4 mr-1" /> View
+                              </a>
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="flex-1 h-11 rounded-xl font-bold hover:bg-primary hover:text-white transition-colors hover:border-primary active:scale-95 px-0" 
                               onClick={async () => {
+                                toast.success("Welcome to Download File!", {
+                                  description: `Starting download for ${material.title}... ICE Portal hopes you find this useful! 🚀`,
+                                  duration: 3000,
+                                });
                                 try {
                                   // Fetch to trigger direct download, preventing navigation out of PWA
                                   const response = await fetch(material.fileUrl);
@@ -370,7 +385,7 @@ export default function Materials() {
                                 }
                               }}
                             >
-                              <Download className="w-4 h-4" /> Download
+                              <Download className="w-4 h-4 mr-1" /> Download
                             </Button>
                             <Button 
                               variant={inCart ? "secondary" : "default"} 

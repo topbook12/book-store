@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { toast } from 'sonner';
-import { Trash2, Download } from 'lucide-react';
+import { Trash2, Download, Eye } from 'lucide-react';
 import { Material } from '../../types';
 
 export default function ManageMaterials() {
@@ -112,10 +112,19 @@ export default function ManageMaterials() {
                     </td>
                     <td className="py-3 pl-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                           <a href={m.fileUrl} target="_blank" rel="noopener noreferrer">
+                             <Eye className="w-4 h-4" />
+                           </a>
+                        </Button>
                         <Button 
                           variant="outline" 
                           size="sm" 
                           onClick={async () => {
+                            toast.success("Welcome to Download File!", {
+                              description: `Starting download for ${m.title}... ICE Portal hopes you find this useful! 🚀`,
+                              duration: 3000,
+                            });
                             try {
                               const response = await fetch(m.fileUrl);
                               const blob = await response.blob();

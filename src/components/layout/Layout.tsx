@@ -33,16 +33,27 @@ export default function Layout() {
     toast.success('Starting batch download...');
     for (const item of items) {
       try {
+        const response = await fetch(item.fileUrl);
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = item.fileName || item.title || 'download';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(blobUrl);
+        await new Promise(resolve => setTimeout(resolve, 800)); // stagger downloads slightly longer for blobs
+      } catch (err) {
+        console.error("Failed to trigger blob download, falling back", err);
         const a = document.createElement('a');
         a.href = item.fileUrl;
-        a.download = item.fileName || 'download';
+        a.download = item.fileName || item.title || 'download';
         a.target = '_blank';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        await new Promise(resolve => setTimeout(resolve, 500)); // stagger downloads slightly
-      } catch (err) {
-        console.error("Failed to trigger download", err);
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
   };

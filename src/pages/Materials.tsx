@@ -341,10 +341,36 @@ export default function Materials() {
                              </div>
                            </div>
                           <div className="flex items-center gap-3 w-full border-t border-border/30 pt-4">
-                            <Button variant="outline" size="sm" className="w-full h-11 rounded-xl gap-2 font-bold hover:bg-primary hover:text-white transition-colors hover:border-primary active:scale-95" asChild>
-                              <a href={material.fileUrl} target="_blank" rel="noopener noreferrer">
-                                <Download className="w-4 h-4" /> Download
-                              </a>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="w-full h-11 rounded-xl gap-2 font-bold hover:bg-primary hover:text-white transition-colors hover:border-primary active:scale-95" 
+                              onClick={async () => {
+                                try {
+                                  // Fetch to trigger direct download, preventing navigation out of PWA
+                                  const response = await fetch(material.fileUrl);
+                                  const blob = await response.blob();
+                                  const blobUrl = window.URL.createObjectURL(blob);
+                                  const a = document.createElement('a');
+                                  a.href = blobUrl;
+                                  a.download = material.fileName || material.title || 'download';
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  a.remove();
+                                  window.URL.revokeObjectURL(blobUrl);
+                                } catch (e) {
+                                  // Fallback in case of CORS or other issues
+                                  const a = document.createElement('a');
+                                  a.href = material.fileUrl;
+                                  a.download = material.fileName || material.title || 'download';
+                                  a.target = '_blank';
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  a.remove();
+                                }
+                              }}
+                            >
+                              <Download className="w-4 h-4" /> Download
                             </Button>
                             <Button 
                               variant={inCart ? "secondary" : "default"} 

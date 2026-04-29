@@ -112,10 +112,33 @@ export default function ManageMaterials() {
                     </td>
                     <td className="py-3 pl-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                           <a href={m.fileUrl} target="_blank" rel="noopener noreferrer">
-                             <Download className="w-4 h-4" />
-                           </a>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(m.fileUrl);
+                              const blob = await response.blob();
+                              const blobUrl = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = blobUrl;
+                              a.download = m.fileName || m.title || 'download';
+                              document.body.appendChild(a);
+                              a.click();
+                              a.remove();
+                              window.URL.revokeObjectURL(blobUrl);
+                            } catch (e) {
+                              const a = document.createElement('a');
+                              a.href = m.fileUrl;
+                              a.download = m.fileName || m.title || 'download';
+                              a.target = '_blank';
+                              document.body.appendChild(a);
+                              a.click();
+                              a.remove();
+                            }
+                          }}
+                        >
+                           <Download className="w-4 h-4" />
                         </Button>
                         <Button variant="destructive" size="sm" onClick={() => handleDelete(m.id)}>
                           <Trash2 className="w-4 h-4" />

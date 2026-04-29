@@ -1,13 +1,14 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
-import { auth } from '../../firebase';
+import { auth, db } from '../../firebase';
 import { signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { Button } from '../ui/button';
 import { LogOut, Library, Bell, ShoppingCart, LayoutDashboard, Moon, Sun, Home, User, Menu, X, Download, Trash2, Globe } from 'lucide-react';
 import { useCartStore } from '../../store/cartStore';
 import { useTheme } from '../ThemeProvider';
 import { motion, AnimatePresence } from 'motion/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '../../lib/utils';
 import { toast } from 'sonner';
 import InstallPWA from '../InstallPWA';
@@ -19,6 +20,27 @@ export default function Layout() {
   const location = useLocation();
   
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [settings, setSettings] = useState({
+    developerName: 'Topu Biswas',
+    developerLink: '#'
+  });
+
+  useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const docRef = doc(db, 'settings', 'general');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.developerName) setSettings(prev => ({ ...prev, developerName: data.developerName }));
+          if (data.developerLink) setSettings(prev => ({ ...prev, developerLink: data.developerLink }));
+        }
+      } catch (error) {
+        console.error("Failed to load settings in Layout:", error);
+      }
+    }
+    fetchSettings();
+  }, []);
 
   const handleLogout = () => {
     signOut(auth);
@@ -326,13 +348,13 @@ export default function Layout() {
         </div>
       </div>
 
-      <footer className="hidden md:block border-t border-border/40 bg-card/50 backdrop-blur pb-env-safe top-safe">
-        <div className="container mx-auto px-4 flex flex-col items-center justify-between gap-4 h-16 flex-row">
-          <p className="text-sm font-medium text-muted-foreground">
+      <footer className="border-t border-border/40 bg-card/50 backdrop-blur pb-20 md:pb-0">
+        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4 py-6 md:py-0 md:h-16">
+          <p className="text-sm font-medium text-muted-foreground text-center md:text-left">
             Built for ICE Department, Rajshahi University. 
           </p>
-          <p className="text-sm font-medium text-muted-foreground">
-             &copy; {new Date().getFullYear()} ICE Portal
+          <p className="text-sm font-medium text-muted-foreground text-center">
+             &copy; {new Date().getFullYear()} ICE Portal. Developed by <a href={settings.developerLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">{settings.developerName}</a>
           </p>
         </div>
       </footer>

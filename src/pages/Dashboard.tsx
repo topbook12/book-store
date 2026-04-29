@@ -3,6 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import UploadMaterial from './dashboard/UploadMaterial';
 import UserManagement from './dashboard/UserManagement';
 import ManageMaterials from './dashboard/ManageMaterials';
+import SiteSettings from './dashboard/SiteSettings';
 import { cn } from '../lib/utils';
 import { LayoutDashboard, Library, Users, Settings, Bell, Upload, ChevronRight, Lock, ShieldCheck, Globe, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -338,6 +339,7 @@ export default function Dashboard() {
             <Route path="upload" element={<UploadMaterial />} />
             <Route path="materials" element={<ManageMaterials />} />
             <Route path="users" element={<UserManagement />} />
+            <Route path="settings" element={<SiteSettings />} />
             <Route path="profile" element={<div className="glass-panel p-8 rounded-3xl flex items-center justify-center min-h-[300px]">Profile settings coming soon...</div>} />
           </Routes>
         </div>

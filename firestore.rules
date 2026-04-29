@@ -94,5 +94,11 @@ service cloud.firestore {
       allow update: if isTeacher() && isValidNotice() && (request.auth.uid == resource.data.authorId || isAdmin());
       allow delete: if isTeacher() && (request.auth.uid == resource.data.authorId || isAdmin());
     }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }
+
